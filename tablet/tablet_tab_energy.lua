@@ -1,3 +1,5 @@
+local monitor = require("util.monitor_util")
+
 local tab = {
   name = "Energy",
   textColor = colors.white,
@@ -28,36 +30,36 @@ local pages = {
 }
 
 local function drawHeader()
-  local width, height = term.getSize()
-  term.setBackgroundColor(colors.gray)
+  local width, height = monitor.getSize()
+  monitor.setBackgroundColor(colors.gray)
 
   drawBox(13, 2, width - 1, 2, colors.gray)
   local offset = width
   offset = offset - string.len(" >")
-  term.setCursorPos(offset, 2)
-  term.write(" >")
+  monitor.setCursorPos(offset, 2)
+  monitor.write(" >")
 
   local pageCount = #pages
   offset = offset - string.len(tostring(pageCount))
-  term.setCursorPos(offset, 2)
-  term.write(pageCount)
+  monitor.setCursorPos(offset, 2)
+  monitor.write(pageCount)
 
   offset = offset - 1
-  term.setCursorPos(offset, 2)
-  term.write("/")
+  monitor.setCursorPos(offset, 2)
+  monitor.write("/")
 
   offset = offset - string.len(tostring(currentPage))
-  term.setCursorPos(offset, 2)
-  term.write(currentPage)
+  monitor.setCursorPos(offset, 2)
+  monitor.write(currentPage)
 
   offset = offset - string.len("< ")
-  term.setCursorPos(offset, 2)
-  term.write("< ")
+  monitor.setCursorPos(offset, 2)
+  monitor.write("< ")
 
   --[[
   offset = offset - string.len("Page ")
-  term.setCursorPos(offset, 2)
-  term.write("Page")
+  monitor.setCursorPos(offset, 2)
+  monitor.write("Page")
   --]]
 end
 
@@ -72,18 +74,20 @@ tab.handleButton = function(button, x, y)
 end
 
 tab.handleRednetMessage = function(sender, message, protocol)
-  term.setCursorPos(2, 3)
-  term.write("Page")
+  --[[
+  monitor.setCursorPos(2, 3)
+  monitor.write("Page")
 
-  term.setCursorPos(7, 3)
-  term.write(currentPage)
+  monitor.setCursorPos(7, 3)
+  monitor.write(currentPage)
 
   local offset = string.len(tostring(currentPage))
-  term.setCursorPos(7 + offset, 3)
-  term.write("/")
+  monitor.setCursorPos(7 + offset, 3)
+  monitor.write("/")
 
-  term.setCursorPos(8 + offset, 3)
-  term.write(#pages)
+  monitor.setCursorPos(8 + offset, 3)
+  monitor.write(#pages)
+  --]]
 end
 
 return tab

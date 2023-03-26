@@ -1,15 +1,31 @@
-require("util/draw_util")
+local monitor = require("util.monitor_util")
+require("util.draw_util")
+require("config.core")
 
-local tabs = require("tab/tablet_tab")
+local tabs = {}
 local currentTab
 
 local hasErrorScreen = false
 local running = true
 
+local timerId
+
 function initialize()
-  term.clear()
-  term.setCursorBlink(false)
-  draw()
+  monitor.clear()
+  monitor.setCursorBlink(false)
+
+  if system_type == "tablet" then
+    os.setComputerLabel("System")
+
+    tabs = require("tablet/tablet_tab")
+    draw()
+  else
+    os.setComputerLabel("System - " .. system_type)
+
+    local tab = require("system/system_" .. system_type)
+    table.insert(tabs, tab)
+    openTab(tab)
+  end
 
   peripheral.find("modem", rednet.open)
   startEventLoop()
@@ -22,21 +38,21 @@ function close()
 end
 
 function draw()
-  local width, height = term.getSize()
+  local width, height = monitor.getSize()
 
   local buttonWidth = width / 2
   local buttonHeight = height / (#tabs / 2)
 
   for step, tab in ipairs(tabs) do
-    term.setBackgroundColor(tab.backgroundColor)
+    monitor.setBackgroundColor(tab.backgroundColor)
 
     local offsetX = getOffsetX(step, buttonWidth)
     local offsetY = getOffsetY(step, buttonHeight)
 
     for x = 1, buttonWidth do
       for y = 1, buttonHeight do
-        term.setCursorPos(offsetX + x, offsetY + y)
-        term.write(" ")
+        monitor.setCursorPos(offsetX + x, offsetY + y)
+        monitor.write(" ")
       end
     end
 
@@ -44,62 +60,10 @@ function draw()
     local textRow = math.floor((buttonHeight + 1) / 2)
     local offsetText = math.ceil((buttonWidth + 1 - textSize) / 2)
 
-    term.setCursorPos(offsetX + offsetText, offsetY + textRow)
-    term.setTextColor(tab.textColor)
-    term.write(tab.name)
+    monitor.setCursorPos(offsetX + offsetText, offsetY + textRow)
+    monitor.setTextColor(tab.textColor)
+    monitor.write(tab.name)
   end
-end
-
-function drawBrackground(color)
-  local width, height = term.getSize()
-
-  if color then
-    term.setBackgroundColor(color)
-  else
-    term.setBackgroundColor(colors.black)
-  end
-
-  for x = 1, width do
-    for y = 1, height do
-      term.setCursorPos(x, y)
-      term.write(" ")
-    end
-  end
-end
-
-function drawTabTitle(tab)
-  local width, height = term.getSize()
-  local textSize = string.len(tab.name)
-
-  local offset = 5;
-  --local offset = math.ceil((width - textSize) / 2)
-
-  term.setBackgroundColor(colors.gray)
-  for x = 2, width - 1 do
-    term.setCursorPos(x, 2)
-    term.write(" ")
-  end
-
-  term.setCursorPos(offset - 2, 2)
-  term.setBackgroundColor(colors.lightGray)
-  term.write(" ")
-
-  term.setCursorPos(offset - 1, 2)
-  term.setBackgroundColor(colors.black)
-  term.write(" ")
-
-  term.setCursorPos(offset, 2)
-  term.setBackgroundColor(colors.black)
-  term.setTextColor(colors.white)
-  term.write(tab.name)
-
-  term.setCursorPos(offset + textSize, 2)
-  term.setBackgroundColor(colors.black)
-  term.write(" ")
-
-  term.setCursorPos(offset + textSize + 1, 2)
-  term.setBackgroundColor(colors.lightGray)
-  term.write(" ")
 end
 
 function getOffsetX(step, width)
@@ -134,7 +98,7 @@ function closeTab()
 end
 
 function handleButton(button, x, y)
-  if button == 3 then
+  if button == 3 and system_type == "tablet" then
     if currentTab then
       closeTab()
     end
@@ -144,7 +108,7 @@ function handleButton(button, x, y)
     return
   end
 
-  local width, height = term.getSize()
+  local width, height = monitor.getSize()
 
   local tabSize = #tabs
   local buttonWidth = (width / 2)
@@ -156,7 +120,7 @@ function handleButton(button, x, y)
 
     if x >= offsetX and x <= offsetX + buttonWidth then
       if y >= offsetY and y <= offsetY + buttonHeight then
-        term.setCursorPos(10, 10)
+        monitor.setCursorPos(10, 10)
         xpcall(function() openTab(tab) end, handleError)
       end
     end
@@ -165,7 +129,19 @@ end
 
 function handleRednetMessage(sender, message, protocol)
   for index, value in ipairs(tabs) do
-    value.handleRednetMessage(sender, message, protocol)
+    if (value.network) then
+      if (value.network.isListening(message, protocol)) then
+        value.handleRednetMessage(sender, message, protocol)
+      end
+    end
+  end
+end
+
+function handleTick()
+  for index, value in ipairs(tabs) do
+    if (value.handleTick) then
+      value.handleTick()
+    end
   end
 end
 
@@ -179,31 +155,31 @@ function handleError(error)
 
   drawBrackground(colors.red)
 
-  local width, height = term.getSize()
+  local width, height = monitor.getSize()
 
   local text = "An error occurred"
   local textSize = string.len(text)
 
   local offset = math.ceil((width - textSize) / 2)
 
-  term.setCursorPos(offset, 2)
-  term.setBackgroundColor(colors.red)
-  term.setTextColor(colors.white)
-  term.write(text)
+  monitor.setCursorPos(offset, 2)
+  monitor.setBackgroundColor(colors.red)
+  monitor.setTextColor(colors.white)
+  monitor.write(text)
 
   local textMaxWidth = width - 6
   local textHeightOffset = 5
   for i = textHeightOffset, height do
-    term.setCursorPos(2, i)
+    monitor.setCursorPos(2, i)
 
     local currentTextWidth = (i - textHeightOffset) * textMaxWidth
-    term.write(string.sub(error, currentTextWidth, currentTextWidth + textMaxWidth - 1))
+    monitor.write(string.sub(error, currentTextWidth, currentTextWidth + textMaxWidth - 1))
   end
 
   for i = 1, 10 do
-    term.setCursorPos(width - 1, 2)
-    term.setTextColor(colors.white)
-    term.write(10 - i)
+    monitor.setCursorPos(width - 1, 2)
+    monitor.setTextColor(colors.white)
+    monitor.write(10 - i)
     sleep(1)
   end
 
@@ -214,6 +190,8 @@ function handleError(error)
 end
 
 function startEventLoop()
+  timerId = os.startTimer(1)
+  
   while true do
     local event = {os.pullEvent()}
     local eventName = event[1]
@@ -225,10 +203,22 @@ function startEventLoop()
 
     xpcall(function ()
       if hasErrorScreen then
+      elseif eventName == "timer" then
+        if (event[2] == timerId) then
+          os.cancelTimer(timerId)
+          timerId = os.startTimer(1)
+          handleTick()
+        end
       elseif eventName == "rednet_message" then
         handleRednetMessage(event[2], event[3], event[4])
       elseif eventName == "mouse_click" then
-        handleButton(event[2], event[3], event[4])
+        if (monitor == term) then
+          handleButton(event[2], event[3], event[4])
+        else
+          print("Only monitor!")
+        end
+      elseif eventName == "monitor_touch" then
+        handleButton(2, event[3], event[4])
       end
     end, handleError)
   end
