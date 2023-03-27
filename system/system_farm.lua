@@ -36,6 +36,9 @@ tab.openTab = function()
 
   handleTick()
   update()
+
+  -- Send update to all after init
+  tab.handleRednetMessage(nil, "tree.update", nil)
 end
 
 tab.closeTab = function()
@@ -94,6 +97,7 @@ function update()
   local buttonToggle = button_manager.getButton("toggle")
   if (buttonToggle) then
     buttonToggle.title = running and "On" or "Off"
+    buttonToggle.backgroundColor = running and colors.green or colors.red
     buttonToggle.update()
   end
 

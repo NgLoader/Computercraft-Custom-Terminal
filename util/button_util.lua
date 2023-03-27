@@ -16,7 +16,7 @@ button_manager.getButtonXY = function (x, y)
   return nil
 end
 
-button_manager.addButton = function (identifier, startX, endX, startY, endY, title, colorText, colorBackground)
+button_manager.addButton = function (identifier, startX, endX, startY, endY, title, textColor, backgroundColor)
   button_list[identifier] = {
     identifier = identifier,
     startX = startX,
@@ -24,8 +24,8 @@ button_manager.addButton = function (identifier, startX, endX, startY, endY, tit
     startY = startY,
     endY = endY,
     title = title,
-    colorText = colorText,
-    colorBackground = colorBackground,
+    textColor = textColor,
+    backgroundColor = backgroundColor,
     update = function () button_manager.drawButton(identifier) end
   }
 end
@@ -40,8 +40,8 @@ button_manager.drawButton = function (identifier)
     return
   end
 
-  if (button.colorBackground) then
-    drawBox(button.startX, button.startY, button.endX, button.endY, button.colorBackground)
+  if (button.backgroundColor) then
+    drawBox(button.startX, button.startY, button.endX, button.endY, button.backgroundColor)
   end
 
   if (button.title) then
@@ -50,8 +50,8 @@ button_manager.drawButton = function (identifier)
     local offsetText = math.ceil(((button.endX - button.startX) + 1 - textSize) / 2)
 
     monitor.setCursorPos(button.startX + offsetText, button.startY + textRow)
-    monitor.setBackgroundColor(button.colorBackground or colors.black)
-    monitor.setTextColor(button.colorText or colors.white)
+    monitor.setBackgroundColor(button.backgroundColor or colors.black)
+    monitor.setTextColor(button.textColor or colors.white)
     monitor.write(button.title)
   end
 end

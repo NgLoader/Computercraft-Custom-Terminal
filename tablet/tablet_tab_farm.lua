@@ -49,24 +49,31 @@ end
 
 tab.handleRednetMessage = function(sender, message, protocol)
   if message == "tree.state.storage.full" then
-    local button = button_manager.getButton("storage")
-    button.title = "Storage: Full"
-    button.update()
+    changeStorage(true)
   elseif message == "tree.state.storage.empty" then
-    local button = button_manager.getButton("storage")
-    button.title = "Storage: Empty"
-    button.update()
+    changeStorage(false)
   elseif message == "tree.state.on" then
     running = true
-
-    local button = button_manager.getButton("toggle")
-    button.title = "On"
-    button.update()
+    changeState(true)
   elseif message == "tree.state.off" then
     running = false
+    changeState(false)
+  end
+end
 
-    local button = button_manager.getButton("toggle")
-    button.title = "Off"
+function changeStorage(type)
+  local button = button_manager.getButton("storage")
+  if (button) then
+    button.title = "Storage: " .. (type and "Full" or "Empty")
+    button.update()
+  end
+end
+
+function changeState(type)
+  local button = button_manager.getButton("toggle")
+  if (button) then
+    button.title = type and "On" or "Off"
+    button.backgroundColor = running and colors.green or colors.red
     button.update()
   end
 end
